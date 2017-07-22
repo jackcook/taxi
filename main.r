@@ -1,4 +1,4 @@
-setwd("/Users/jackcook/Desktop/taxi-r")
+setwd("/Users/jackcook/Desktop/taxi")
 
 library(data.table)
 library(dplyr)
@@ -48,7 +48,10 @@ id_test <- test["id"]
 train[c("id", "pickup_datetime", "dropoff_datetime", "trip_duration")] <- list(NULL)
 test[c("id", "pickup_datetime")] <- list(NULL)
 
-bst <- xgboost(data = data.matrix(train), label = ytrain[[1]], nrounds = 100, objective = "reg:linear")
+bst <- xgboost(data.matrix(train), label = ytrain[[1]], nrounds = 100)
 pred <- predict(bst, data.matrix(test))
 
-results = data.frame(id_test[[1]], pred)
+results = data.frame(id_test[[1]], pmax(0, round(pred)))
+names(results) <- c("id", "trip_duration")
+
+write.csv(results, "./output/submission.csv", quote = FALSE, row.names = FALSE)
