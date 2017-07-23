@@ -38,6 +38,14 @@ clean <- function(df) {
   
   df["distance"] <- sqrt((df["pickup_longitude"] - df["dropoff_longitude"]) ^ 2 + (df["pickup_latitude"] - df["dropoff_latitude"]) ^ 2)
   
+  rad2deg <- function(rad) {
+    return((rad * 180) / (pi))
+  }
+  
+  y <- sin(df["dropoff_latitude"] - df["pickup_latitude"]) * cos(df["dropoff_longitude"])
+  x <- cos(df["pickup_longitude"]) * sin(df["dropoff_longitude"]) - sin(df["pickup_longitude"]) * cos(df["dropoff_longitude"]) * cos(df["dropoff_latitude"] - df["pickup_latitude"])
+  df["direction"] = rad2deg(atan2(unlist(y), unlist(x)))
+  
   df = find_neighborhoods(df, "pickup_longitude", "pickup_latitude", "pickup_neighborhood")
   df = find_neighborhoods(df, "dropoff_longitude", "dropoff_latitude", "dropoff_neighborhood")
   
