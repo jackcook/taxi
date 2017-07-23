@@ -1,7 +1,17 @@
+# macOS
 .DS_Store
-*.csv
+
+# R
+.Rhistory
+.RData
+
+# XGBoost Model
 *.model
 
+# Input Data
+*.csv
+
+# Zillow Neighborhood Data
 *.dbf
 *.prj
 *.shp
