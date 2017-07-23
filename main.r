@@ -21,7 +21,10 @@ clean <- function(df) {
            passenger_count = factor(passenger_count),
            store_and_fwd_flag = factor(store_and_fwd_flag))
   
-  if (is.element("dropoff_datetime", names(df))) {
+  if (is.element("trip_duration", names(df))) {
+    # filter out rides that are shorter than 10 seconds or longer than 4 hours
+    df <- df[df$trip_duration > 10 & df$trip_duration < 14400, ]
+    
     df <- df %>%
       mutate(dropoff_datetime = ymd_hms(dropoff_datetime))
   }
@@ -32,12 +35,12 @@ clean <- function(df) {
   df["hour"] <- hour(df["pickup_datetime"][[1]])
   df["minute"] <- minute(df["pickup_datetime"][[1]])
   
-  df["dist_long"] <- df["pickup_longitude"] - df["dropoff_longitude"]
-  df["dist_lat"] <- df["pickup_latitude"] - df["dropoff_latitude"]
-  df["distance"] <- sqrt(df["dist_long"] ^ 2 + df["dist_lat"] ^ 2)
+  df["distance"] <- sqrt((df["pickup_longitude"] - df["dropoff_longitude"]) ^ 2 + (df["pickup_latitude"] - df["dropoff_latitude"]) ^ 2)
   
   find_neighborhoods(df, "pickup_longitude", "pickup_latitude", "pickup_neighborhood")
   find_neighborhoods(df, "dropoff_longitude", "dropoff_latitude", "dropoff_neighborhood")
+  
+  df[c("pickup_datetime", "pickup_longitude", "pickup_latitude", "dropoff_longitude", "dropoff_latitude")] <- list(NULL)
   
   return(df)
 }
@@ -48,10 +51,10 @@ test <- clean(fread("./input/test.csv"))
 Y_train <- train["trip_duration"][[1]]
 id_test <- test["id"][[1]]
 
-train[c("id", "pickup_datetime", "dropoff_datetime", "trip_duration")] <- list(NULL)
-test[c("id", "pickup_datetime")] <- list(NULL)
+train[c("id", "dropoff_datetime", "trip_duration")] <- list(NULL)
+test[c("id")] <- list(NULL)
 
-model <- xgboost(data.matrix(train), label = Y_train, nrounds = 1)
+model <- xgboost(data.matrix(train), label = Y_train, nrounds = 100)
 predictions <- pmax(0, round(predict(model, data.matrix(test))))
 
 results = data.frame(id_test, predictions)
