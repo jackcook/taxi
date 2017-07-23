@@ -1,5 +1,3 @@
-setwd("/Users/jackcook/Desktop/taxi")
-
 library(data.table)
 library(dplyr)
 library(lubridate)
