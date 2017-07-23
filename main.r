@@ -12,6 +12,7 @@ find_neighborhoods <- function(df, long_feature, lat_feature, neighborhood_featu
   coordinates(dat) <- ~ long + lat
   proj4string(dat) <- proj4string(neighborhoods)
   df[neighborhood_feature] <- over(dat, neighborhoods)$Name
+  return(df[complete.cases(df), ])
 }
 
 clean <- function(df) {
@@ -37,10 +38,8 @@ clean <- function(df) {
   
   df["distance"] <- sqrt((df["pickup_longitude"] - df["dropoff_longitude"]) ^ 2 + (df["pickup_latitude"] - df["dropoff_latitude"]) ^ 2)
   
-  find_neighborhoods(df, "pickup_longitude", "pickup_latitude", "pickup_neighborhood")
-  find_neighborhoods(df, "dropoff_longitude", "dropoff_latitude", "dropoff_neighborhood")
-  
-  df[c("pickup_datetime", "pickup_longitude", "pickup_latitude", "dropoff_longitude", "dropoff_latitude")] <- list(NULL)
+  df = find_neighborhoods(df, "pickup_longitude", "pickup_latitude", "pickup_neighborhood")
+  df = find_neighborhoods(df, "dropoff_longitude", "dropoff_latitude", "dropoff_neighborhood")
   
   return(df)
 }
@@ -55,8 +54,10 @@ train[c("id", "dropoff_datetime", "trip_duration")] <- list(NULL)
 test[c("id")] <- list(NULL)
 
 model <- xgboost(data.matrix(train), label = Y_train, nrounds = 100)
-predictions <- pmax(0, round(predict(model, data.matrix(test))))
+importance_matrix <- xgb.importance(colnames(data.matrix(train)), model = model)
+xgb.plot.importance(importance_matrix, rel_to_first = TRUE, xlab = "Relative importance")
 
+predictions <- pmax(0, round(predict(model, data.matrix(test))))
 results = data.frame(id_test, predictions)
 names(results) <- c("id", "trip_duration")
 
