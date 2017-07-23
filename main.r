@@ -41,6 +41,29 @@ test["dist_lat"] <- test["pickup_latitude"] - test["dropoff_latitude"]
 train["distance"] <- sqrt(train["dist_long"] ^ 2 + train["dist_lat"] ^ 2)
 test["distance"] <- sqrt(test["dist_long"] ^ 2 + test["dist_lat"] ^ 2)
 
+ny.map <- readOGR("./input/zillow/ZillowNeighborhoods-NY.shp", layer = "ZillowNeighborhoods-NY")
+neighborhoods <- ny.map[ny.map$City == "New York", ]
+
+dat <- data.frame(Longitude = train["pickup_longitude"][[1]], Latitude = train["pickup_latitude"][[1]])
+coordinates(dat) <- ~ Longitude + Latitude
+proj4string(dat) <- proj4string(neighborhoods)
+train["pickup_neighborhood"] <- over(dat, neighborhoods)$Name
+
+dat <- data.frame(Longitude = train["dropoff_longitude"][[1]], Latitude = train["dropoff_latitude"][[1]])
+coordinates(dat) <- ~ Longitude + Latitude
+proj4string(dat) <- proj4string(neighborhoods)
+train["dropoff_neighborhood"] <- over(dat, neighborhoods)$Name
+
+dat <- data.frame(Longitude = test["pickup_longitude"][[1]], Latitude = test["pickup_latitude"][[1]])
+coordinates(dat) <- ~ Longitude + Latitude
+proj4string(dat) <- proj4string(neighborhoods)
+test["pickup_neighborhood"] <- over(dat, neighborhoods)$Name
+
+dat <- data.frame(Longitude = test["dropoff_longitude"][[1]], Latitude = test["dropoff_latitude"][[1]])
+coordinates(dat) <- ~ Longitude + Latitude
+proj4string(dat) <- proj4string(neighborhoods)
+test["dropoff_neighborhood"] <- over(dat, neighborhoods)$Name
+
 ytrain <- train["trip_duration"]
 id_train <- train["id"]
 id_test <- test["id"]
@@ -55,3 +78,4 @@ results = data.frame(id_test[[1]], pmax(0, round(pred)))
 names(results) <- c("id", "trip_duration")
 
 write.csv(results, "./output/submission.csv", quote = FALSE, row.names = FALSE)
+ 
