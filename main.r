@@ -45,25 +45,17 @@ test["distance"] <- sqrt(test["dist_long"] ^ 2 + test["dist_lat"] ^ 2)
 ny.map <- readOGR("./input/zillow/ZillowNeighborhoods-NY.shp", layer = "ZillowNeighborhoods-NY")
 neighborhoods <- ny.map[ny.map$City == "New York", ]
 
-dat <- data.frame(Longitude = train["pickup_longitude"][[1]], Latitude = train["pickup_latitude"][[1]])
-coordinates(dat) <- ~ Longitude + Latitude
-proj4string(dat) <- proj4string(neighborhoods)
-train["pickup_neighborhood"] <- over(dat, neighborhoods)$Name
+find_neighborhoods <- function(df, long_feature, lat_feature, neighborhood_feature) {
+  dat <- data.frame(long = df[long_feature][[1]], lat = df[lat_feature][[1]])
+  coordinates(dat) <- ~ long + lat
+  proj4string(dat) <- proj4string(neighborhoods)
+  df[neighborhood_feature] <- over(dat, neighborhoods)$Name
+}
 
-dat <- data.frame(Longitude = train["dropoff_longitude"][[1]], Latitude = train["dropoff_latitude"][[1]])
-coordinates(dat) <- ~ Longitude + Latitude
-proj4string(dat) <- proj4string(neighborhoods)
-train["dropoff_neighborhood"] <- over(dat, neighborhoods)$Name
-
-dat <- data.frame(Longitude = test["pickup_longitude"][[1]], Latitude = test["pickup_latitude"][[1]])
-coordinates(dat) <- ~ Longitude + Latitude
-proj4string(dat) <- proj4string(neighborhoods)
-test["pickup_neighborhood"] <- over(dat, neighborhoods)$Name
-
-dat <- data.frame(Longitude = test["dropoff_longitude"][[1]], Latitude = test["dropoff_latitude"][[1]])
-coordinates(dat) <- ~ Longitude + Latitude
-proj4string(dat) <- proj4string(neighborhoods)
-test["dropoff_neighborhood"] <- over(dat, neighborhoods)$Name
+find_neighborhoods(train, "pickup_longitude", "pickup_latitude", "pickup_neighborhood")
+find_neighborhoods(train, "dropoff_longitude", "dropoff_latitude", "dropoff_neighborhood")
+find_neighborhoods(test, "pickup_longitude", "pickup_latitude", "pickup_neighborhood")
+find_neighborhoods(test, "dropoff_longitude", "dropoff_latitude", "dropoff_neighborhood")
 
 ytrain <- train["trip_duration"]
 id_train <- train["id"]
@@ -72,7 +64,7 @@ id_test <- test["id"]
 train[c("id", "pickup_datetime", "dropoff_datetime", "trip_duration")] <- list(NULL)
 test[c("id", "pickup_datetime")] <- list(NULL)
 
-bst <- xgboost(data.matrix(train), label = ytrain[[1]], nrounds = 100)
+bst <- xgboost(data.matrix(train), label = ytrain[[1]], nrounds = 1)
 pred <- predict(bst, data.matrix(test))
 
 results = data.frame(id_test[[1]], pmax(0, round(pred)))
