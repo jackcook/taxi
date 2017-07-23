@@ -3,6 +3,7 @@ setwd("/Users/jackcook/Desktop/taxi")
 library(data.table)
 library(dplyr)
 library(lubridate)
+library(rgdal)
 library(xgboost)
 
 train <- fread("./input/train.csv")
