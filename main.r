@@ -38,6 +38,9 @@ clean <- function(df) {
   
   df["distance"] <- sqrt((df["pickup_longitude"] - df["dropoff_longitude"]) ^ 2 + (df["pickup_latitude"] - df["dropoff_latitude"]) ^ 2)
   
+  df["center_latitude"] <- (df["pickup_latitude"] + df["dropoff_latitude"]) / 2
+  df["center_longitude"] <- (df["pickup_longitude"] + df["dropoff_longitude"]) / 2
+  
   rad2deg <- function(rad) {
     return((rad * 180) / (pi))
   }
