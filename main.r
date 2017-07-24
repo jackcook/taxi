@@ -12,7 +12,7 @@ find_neighborhoods <- function(df, long_feature, lat_feature, neighborhood_featu
   coordinates(dat) <- ~ long + lat
   proj4string(dat) <- proj4string(neighborhoods)
   df[neighborhood_feature] <- over(dat, neighborhoods)$Name
-  return(df[complete.cases(df), ])
+  return(df)
 }
 
 clean <- function(df) {
